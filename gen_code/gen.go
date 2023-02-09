@@ -3,9 +3,9 @@ package gen_code
 import (
 	"errors"
 	"fmt"
-	"modelctl/gen_code/mssql"
-	"modelctl/gen_code/mysql"
-	"modelctl/model"
+	"github.com/HC74/modelctl/gen_code/mssql"
+	"github.com/HC74/modelctl/gen_code/mysql"
+	"github.com/HC74/modelctl/model"
 	"strings"
 )
 

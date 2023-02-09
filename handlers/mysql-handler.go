@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"modelctl/model"
-)
+import "github.com/HC74/modelctl/model"
 
 // MysqlHandle mysql处理器
 func MysqlHandle(f *model.FlagModel) {

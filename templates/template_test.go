@@ -2,8 +2,8 @@ package templates
 
 import (
 	"fmt"
+	"github.com/HC74/modelctl/utils/ioutils"
 	"html/template"
-	"modelctl/utils/ioutils"
 	"os"
 	"path"
 	"runtime"

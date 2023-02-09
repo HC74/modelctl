@@ -2,7 +2,7 @@ package mysql
 
 import (
 	"fmt"
-	"modelctl/model"
+	"github.com/HC74/modelctl/model"
 	"testing"
 )
 

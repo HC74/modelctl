@@ -1,8 +1,8 @@
 package templates
 
 import (
-	"modelctl/model"
-	"modelctl/utils"
+	"github.com/HC74/modelctl/model"
+	"github.com/HC74/modelctl/utils"
 )
 
 type ITemplate interface {

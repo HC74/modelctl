@@ -1,6 +1,6 @@
 package gen_code
 
-import "modelctl/model"
+import "github.com/HC74/modelctl/model"
 
 type IDBMetaData interface {
 	ConnectionDB() error

@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"modelctl/model"
-	"modelctl/utils"
+	"github.com/HC74/modelctl/model"
+	"github.com/HC74/modelctl/utils"
 	"strings"
 )
 import _ "github.com/denisenkom/go-mssqldb"

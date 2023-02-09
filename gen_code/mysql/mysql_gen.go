@@ -3,9 +3,9 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/HC74/modelctl/model"
+	"github.com/HC74/modelctl/utils"
 	_ "github.com/go-sql-driver/mysql"
-	"modelctl/model"
-	"modelctl/utils"
 	"strings"
 )
 

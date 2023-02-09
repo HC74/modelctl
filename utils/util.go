@@ -3,8 +3,8 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"github.com/HC74/modelctl/utils/ioutils"
 	"html/template"
-	"modelctl/utils/ioutils"
 	"net/url"
 	"os"
 	"strings"

@@ -1,7 +1,7 @@
 package model
 
 import (
-	"modelctl/utils"
+	"github.com/HC74/modelctl/utils"
 	"strings"
 )
 

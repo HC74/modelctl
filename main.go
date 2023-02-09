@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"modelctl/gen_code"
-	"modelctl/handlers"
-	"modelctl/model"
-	"modelctl/utils"
+	"github.com/HC74/modelctl/gen_code"
+	"github.com/HC74/modelctl/handlers"
+	"github.com/HC74/modelctl/model"
+	"github.com/HC74/modelctl/utils"
 	"strings"
 )
 

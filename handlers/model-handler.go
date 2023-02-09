@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"fmt"
-	"modelctl/model"
-	"modelctl/templates"
-	"modelctl/utils"
+	"github.com/HC74/modelctl/model"
+	"github.com/HC74/modelctl/templates"
+	"github.com/HC74/modelctl/utils"
 	"os"
 	"strings"
 	"sync"
