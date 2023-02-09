@@ -1,4 +1,4 @@
-module modelctl
+module github.com/HC74/modelctl
 
 go 1.17
 
