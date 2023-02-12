@@ -16,6 +16,7 @@ type (
 		Column     string // 字段名
 		ColumnType string // 字段类型
 		Tag        string // 字段的tag
+		Remark     string // 备注
 	}
 	TmplColStructList = []*TmplColStruct
 	TmplStruct        struct {
@@ -24,7 +25,6 @@ type (
 		TableName  string            // 表名称
 		HasTime    bool              // 是否包含time类型的字段
 		Cols       TmplColStructList // 属性
-		Remark     string            // 备注
 	}
 	TmplStructList = []*TmplStruct
 )
@@ -107,7 +107,16 @@ func ColHandler(cols model.ColumnMetaDataList) TmplColStructList {
 		t := &TmplColStruct{
 			Column:     ColumnTableHandler(column.Name),
 			ColumnType: column.GoType,
-			Tag:        fmt.Sprintf("`gorm:\"column:%v\"`", column.Name),
+		}
+		if strings.TrimSpace(column.Remark) != "" {
+			t.Remark = fmt.Sprintf(" \t // %v", column.Remark)
+		} else {
+			t.Remark = ""
+		}
+		if column.IsPKey {
+			t.Tag = fmt.Sprintf("`gorm:\"primaryKey;column:%v\" json:\"%v\"`", column.Name, column.Name)
+		} else {
+			t.Tag = fmt.Sprintf("`gorm:\"column:%v\" json:\"%v\"`", column.Name, column.Name)
 		}
 		tcsList = append(tcsList, t)
 	}

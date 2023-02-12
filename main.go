@@ -17,7 +17,7 @@ var (
 
 func init() {
 	flag.StringVar(&flagModel.DatabaseType, "t", "mysql", "数据库类型: 默认为mysql sqlserver:mssql")
-	flag.StringVar(&flagModel.Url, "url", "NULL", "数据库链接 默认为空 例如 mysql: 账号:密码@tcp(IP:端口)/库 / sqlserver: server=IP:端口;database=库;userId=账号;password=密码")
+	flag.StringVar(&flagModel.Url, "url", "NULL", "数据库链接 默认为空 例如 mysql: 账号:密码@tcp(IP:端口)/库 或者您使用的是sqlserver : server=IP:端口;database=库;userId=账号;password=密码")
 	flag.StringVar(&flagModel.TableStr, "tables", "*", "表: 默认为全部,如果要选表生成 则需要 表1,表2,表3....")
 	flag.StringVar(&flagModel.OutDir, "dir", "/", "生成目录: 默认为当前目录 暂不支持自定义")
 	flag.StringVar(&flagModel.PackageName, "f", "model", "包名 默认为model")

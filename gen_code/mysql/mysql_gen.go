@@ -14,7 +14,7 @@ const (
 	tableNamesSql   = `select table_name from information_schema.tables where table_schema = ? and table_type = 'BASE TABLE';`
 	tableNameColumn = `select column_name,
 		is_nullable, if(column_type = 'tinyint(1)', 'boolean', data_type),
-		column_type like '%unsigned%'
+		column_type like '%unsigned%',COLUMN_COMMENT,column_key
 		from information_schema.columns
 		where table_schema = ? and  table_name = ?
 		order by ordinal_position;`
@@ -129,14 +129,15 @@ func (f *FlagMysqlDbGen) GetTableColumns(tableName string) (cols model.ColumnMet
 	// 一列一列的读取
 	for rows.Next() {
 		// 名称 是否为空 数据类型
-		var name, isNullable, dataType string
+		var name, isNullable, dataType, remark, key string
 		var isUnsigned bool
-		if err := rows.Scan(&name, &isNullable, &dataType, &isUnsigned); err != nil {
+		if err := rows.Scan(&name, &isNullable, &dataType, &isUnsigned, &remark, &key); err != nil {
 			return nil, err
 		}
 		// 是否为空
 		isNull := strings.ToLower(isNullable) == "yes"
-		cols = append(cols, model.NewColumnMetaData(name, isNull, dataType, isUnsigned, tableName, "", false, "mysql"))
+		isKey := strings.ToUpper(key) == "PRI"
+		cols = append(cols, model.NewColumnMetaData(name, isNull, dataType, isUnsigned, tableName, remark, isKey, "mysql"))
 	}
 	return cols, rows.Err()
 }
