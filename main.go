@@ -7,6 +7,7 @@ import (
 	"github.com/HC74/modelctl/handlers"
 	"github.com/HC74/modelctl/model"
 	"github.com/HC74/modelctl/utils"
+	"github.com/fatih/color"
 	"strings"
 )
 
@@ -28,6 +29,7 @@ func main() {
 	flag.Parse()
 	// 给Tables赋值
 	flagModel.InitTables()
+	flagModel.InitDatabaseName()
 	if flagModel.Url == "NULL" {
 		panic("URL不能为空")
 	}
@@ -53,9 +55,12 @@ func main() {
 	} else {
 		tables, err = dbMataData.TableDataForSelect(flagModel)
 	}
+	// 仓储
+
+	// 仓储end
 	combination := handlers.Combination(tables, flagModel)
 	fileNum := handlers.ParseTemplateHandler(combination, flagModel)
-	fmt.Println(fmt.Sprintf("Successfully generated, a total of %v files", fileNum))
+	color.Blue("[INFO] Successfully generated, a total of %v files", fileNum)
 	if err != nil {
 		fmt.Printf("get meta tables fail %s /n", err.Error())
 		return

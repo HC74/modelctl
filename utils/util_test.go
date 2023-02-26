@@ -2,7 +2,7 @@ package utils
 
 import (
 	"fmt"
-	"modelctl/utils/ioutils"
+	"github.com/HC74/modelctl/utils/ioutils"
 	"os/user"
 	"testing"
 )

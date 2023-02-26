@@ -65,6 +65,69 @@ func GetDbNameForUrl(dns string) (dbName string, err error) {
 	return strings.Trim(dbNameUrlObj.Path, "/"), nil
 }
 
+// ProcessCdn 处理cdn
+func ProcessCdn(cdn, t string) (string, string, string, string) {
+	if t == "mssql" {
+		return ProcessMssqlDBCdn(cdn)
+	}
+	return ProcessMysqlDBCdn(cdn)
+}
+
+func ProcessMssqlDBCdn(dns string) (string, string, string, string) {
+	var databaseName, username, password string
+	var m map[string]string
+	for _, item := range strings.Split(dns, ";") {
+		kv := strings.Split(item, "=")
+		m[kv[0]] = m[kv[1]]
+	}
+	databaseName = m["database"]
+	username = m["user id"]
+	password = m["password"]
+	return databaseName, username, password, m["server"]
+}
+
+func ProcessMysqlDBCdn(cdn string) (string, string, string, string) {
+	var databaseName, username, password string
+	// 分割掉? 后面的部分
+	if strings.Index(cdn, "?") != -1 {
+		cdn = SplitGetFirst(cdn, "?")
+	}
+	// 处理库名
+	if strings.Index(cdn, "/") == -1 {
+		panic("未找到库名")
+	}
+	databaseName = SplitGetLast(cdn, "/")
+	cdn = SplitGetFirst(cdn, "/")
+	if strings.Index(cdn, "@tcp") == -1 {
+		panic("未找到url")
+	}
+	userpwd := SplitGetFirst(cdn, "@tcp")
+	urlPort := SplitGetLast(cdn, "@tcp")
+	username = SplitGetFirst(userpwd, ":")
+	password = SplitGetLast(userpwd, ":")
+	urlPort = urlPort[1:]
+	urlPort = urlPort[:len(urlPort)-1]
+	return databaseName, username, password, urlPort
+}
+
+// SplitGetFirst 分割获取第一个元素
+func SplitGetFirst(s, sub string) string {
+	if strings.Index(s, sub) == -1 {
+		return ""
+	}
+	ss := strings.Split(s, sub)
+	return ss[0]
+}
+
+// SplitGetLast 分割获取最后一个元素
+func SplitGetLast(s, sub string) string {
+	if strings.Index(s, sub) == -1 {
+		return ""
+	}
+	ss := strings.Split(s, sub)
+	return ss[len(ss)-1]
+}
+
 // Template
 
 // NewTemplate 创建模板

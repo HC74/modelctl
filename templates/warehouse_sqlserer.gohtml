@@ -1,0 +1,45 @@
+{{- $packageName := .Package}}{{ $dbName := .DbName}}{{ $user := .User}}{{ $password := .Password -}}
+{{- $host := .Host }}{{ $now := .Now }}{{ $dbType := .DbType -}}
+{{"// Package "}}{{$packageName}}{{"This model file is automatically generated in "}}{{$now}}{{" and can be edited at will, and it will not be overwritten when it is generated again"}}
+package {{$packageName}}
+import (
+    "fmt"
+    "gorm.io/driver/sqlserver"
+    "gorm.io/gorm"
+    "time"
+)
+
+var DB_{{- $dbType }} *gorm.DB
+
+func Setup() {
+    var (
+        dbName, user, password, host, dsn string
+        err                               error
+    )
+    // TODO If you are using configuration, you need to trouble you to manually modify it
+    dbName = "{{$dbName}}"
+    user = "{{$user}}"
+    password = "{{$password}}"
+    host = "{{$host}}"
+
+    dsn = fmt.Sprintf("sqlserver://%s:%s@%s?database=%s",user,password,host,dbName)
+    DB_{{- $dbType }}, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{})
+    sqlDB, _ := DB_{{- $dbType }}.DB()
+    if err != nil {
+        // TODO Or if you don't know how to handle this error
+    }
+    sqlDB.SetMaxIdleConns(10)
+    sqlDB.SetMaxOpenConns(100)
+    sqlDB.SetConnMaxLifetime(10 * time.Minute)
+    //DB_{{- $dbType }}.Callback().Create().Before("gorm:create").Register("update_created_at", createdCallBack)
+    //DB_{{- $dbType }}.Callback().Update().Before("gorm:update").Register("update_modified_at", updateCallBack)
+
+}
+
+//func createdCallBack(tx *gorm.DB) {
+// // TODO Perhaps you want to do something when you create
+//}
+//
+//func updateCallBack(tx *gorm.DB) {
+// // TODO Maybe you want to do something when modifying
+//}

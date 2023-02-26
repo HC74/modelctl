@@ -5,10 +5,12 @@ import (
 	"github.com/HC74/modelctl/model"
 	"github.com/HC74/modelctl/templates"
 	"github.com/HC74/modelctl/utils"
+	"github.com/fatih/color"
 	"os"
 	"strings"
 	"sync"
 	"text/template"
+	"time"
 )
 
 type (
@@ -25,6 +27,19 @@ type (
 		TableName  string            // 表名称
 		HasTime    bool              // 是否包含time类型的字段
 		Cols       TmplColStructList // 属性
+		HasKey     bool              // 是否包含主键
+		KeyColumn  string            // 主键列名
+		KeyType    string            // 主键类型
+		DBName     string            // DB_数据库类型 组合成仓储通用DB
+	}
+	TmplWarehouse struct {
+		Package  string `json:"package"`  // 包名
+		DbName   string `json:"db_name"`  // 数据库名称
+		User     string `json:"user"`     // 用户名
+		Password string `json:"password"` // 密码
+		Host     string `json:"host"`     // 主机
+		Now      string `json:"now"`      // 当前时间
+		DbType   string `json:"dbType"`   // 数据库类型
 	}
 	TmplStructList = []*TmplStruct
 )
@@ -32,32 +47,63 @@ type (
 var wg sync.WaitGroup
 
 func ParseTemplateHandler(t TmplStructList, flagModel model.FlagModel) int {
-	tpl, err := template.New("model-tpl").Parse(templates.GetGeneratorStructCode())
 	path := fmt.Sprintf("./%v", flagModel.PackageName)
 	exists, _ := utils.PathExists(path)
 	if !exists {
-		err = os.Mkdir(path, 0777)
+		err := os.Mkdir(path, 0777)
 		if err != nil {
 			panic(err)
 		}
 	}
-	wg.Add(len(t))
+	return RenderFile(t, flagModel)
+}
+func RenderFile(t TmplStructList, flagModel model.FlagModel) int {
+	tpl, _ := template.New("model-tpl").Parse(templates.GetGeneratorStructCode())
+	curlTpl, _ := template.New("model-curd-tpl").Parse(templates.GetCURDCode())
+	warehouseTpl, _ := template.New("model-warehouse-tpl").Parse(templates.GetWAREHOUSECode(flagModel.DatabaseType))
+	wgCount := len(t) * 2
+	wg.Add(wgCount)
+	databaseName, username, password, urlPort := utils.ProcessCdn(flagModel.Url, flagModel.DatabaseType)
+	twTpl := &TmplWarehouse{
+		Package:  flagModel.PackageName,
+		DbName:   databaseName,
+		User:     username,
+		Password: password,
+		Host:     urlPort,
+		Now:      time.Now().Format("2006-01-02 15:04:05"),
+		DbType:   flagModel.DatabaseType,
+	}
+	FileHandler(*twTpl, flagModel.PackageName,
+		fmt.Sprintf("%s_warehouse", flagModel.DatabaseName), warehouseTpl, false)
 	for _, tmplStruct := range t {
-		go FileHandler(*tmplStruct, flagModel.PackageName, tpl)
+		go FileHandler(*tmplStruct, flagModel.PackageName, tmplStruct.TableName, tpl, true)
+	}
+	for _, tmplStruct := range t {
+		go FileHandler(*tmplStruct, flagModel.PackageName,
+			fmt.Sprintf("%s%s", tmplStruct.TableName, "_crud"), curlTpl, false)
 	}
 	wg.Wait()
-	return len(t)
+	return wgCount
 }
 
-func FileHandler(t TmplStruct, packageName string, tpl *template.Template) {
-	path := fmt.Sprintf("./%v/%v.go", packageName, t.TableName)
+func FileHandler(t interface{}, pathName, fileName string, tpl *template.Template, ow bool) {
+	path := fmt.Sprintf("./%v/%v.go", pathName, fileName)
 	exists, _ := utils.PathExists(path)
+	owe := true
 	if exists {
+		if !ow {
+			color.Red("[SERIOUS_WARN]This %v.go file already exists, skipped", fileName)
+			wg.Done()
+			return
+		}
 		_ = os.Remove(path)
-		fmt.Println(fmt.Sprintf("The %v file already exists and is being overwritten", path))
+		color.Yellow("[WARN]The %v file already exists and is being overwritten", path)
+		owe = false
 	}
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0777)
-	fmt.Println(fmt.Sprintf("%v.go Generated successfully", t.TableName))
+	if owe {
+		color.Green("[SUC]%v.go Generated successfully", fileName)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -85,7 +131,12 @@ func tableHandler(table *model.TableMetaData, flagModel model.FlagModel) *TmplSt
 		TableName:  table.Name,
 		HasTime:    getHasTime(table.Columns),
 		Cols:       ColHandler(table.Columns),
+		DBName:     fmt.Sprintf("DB_%s", flagModel.DatabaseType),
 	}
+	hasKey, keyName, keyType := getHasKey(table.Columns)
+	t.HasKey = hasKey
+	t.KeyColumn = keyName
+	t.KeyType = keyType
 	return t
 }
 
@@ -98,9 +149,22 @@ func getHasTime(cols model.ColumnMetaDataList) bool {
 	return false
 }
 
+// getHasKey 获取是否有主键并回获取
+func getHasKey(cols model.ColumnMetaDataList) (bool, string, string) {
+	var column *model.ColumnMetaData
+	for i := range cols {
+		column = cols[i]
+		if column.IsPKey {
+			return true, column.Name, column.GoType
+		}
+	}
+	return false, "", ""
+}
+
 // ColHandler 列处理器
 func ColHandler(cols model.ColumnMetaDataList) TmplColStructList {
 	var tcsList TmplColStructList
+	//var hasKey = false
 	var column *model.ColumnMetaData
 	for j := range cols {
 		column = cols[j]

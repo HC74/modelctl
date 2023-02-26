@@ -51,6 +51,15 @@ func TestA(t *testing.T) {
 	}
 }
 
+func TestWarehouse(t *testing.T) {
+	id := 100
+	tmpl, err := template.New("warehouse").Parse("id = {{.}}")
+	if err != nil {
+
+	}
+	tmpl.Execute(os.Stdout, id)
+}
+
 func getCurrentAbPathByCaller() string {
 	var abPath string
 	_, filename, _, ok := runtime.Caller(0)
