@@ -202,7 +202,7 @@ func Setup() {
     host = "{{$host}}"
 
     dsn = fmt.Sprintf("sqlserver://%s:%s@%s?database=%s",user,password,host,dbName)
-    DB_{{- $dbType }}, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{})
+    DB_{{- $dbType }}, err = gorm.Open(sqlserver.Open(dsn), &gorm.Config{})
     sqlDB, _ := DB_{{- $dbType }}.DB()
     if err != nil {
         // TODO Or if you don't know how to handle this error
