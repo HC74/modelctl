@@ -22,15 +22,16 @@ type (
 	}
 	TmplColStructList = []*TmplColStruct
 	TmplStruct        struct {
-		Package    string            // 包名称
-		StructName string            // 结构体名称
-		TableName  string            // 表名称
-		HasTime    bool              // 是否包含time类型的字段
-		Cols       TmplColStructList // 属性
-		HasKey     bool              // 是否包含主键
-		KeyColumn  string            // 主键列名
-		KeyType    string            // 主键类型
-		DBName     string            // DB_数据库类型 组合成仓储通用DB
+		Package         string            // 包名称
+		StructName      string            // 结构体名称
+		TableName       string            // 表名称
+		HasTime         bool              // 是否包含time类型的字段
+		Cols            TmplColStructList // 属性
+		HasKey          bool              // 是否包含主键
+		KeyColumn       string            // 主键列名
+		KeyStructColumn string            // 主键列名对应到结构体的名称
+		KeyType         string            // 主键类型
+		DBName          string            // DB_数据库类型 组合成仓储通用DB
 	}
 	TmplWarehouse struct {
 		Package  string `json:"package"`  // 包名
@@ -44,8 +45,6 @@ type (
 	TmplStructList = []*TmplStruct
 )
 
-var wg sync.WaitGroup
-
 func ParseTemplateHandler(t TmplStructList, flagModel model.FlagModel) int {
 	path := fmt.Sprintf("./%v", flagModel.PackageName)
 	exists, _ := utils.PathExists(path)
@@ -58,10 +57,12 @@ func ParseTemplateHandler(t TmplStructList, flagModel model.FlagModel) int {
 	return RenderFile(t, flagModel)
 }
 func RenderFile(t TmplStructList, flagModel model.FlagModel) int {
+	var wg sync.WaitGroup
 	tpl, _ := template.New("model-tpl").Parse(templates.GetGeneratorStructCode())
 	curlTpl, _ := template.New("model-curd-tpl").Parse(templates.GetCURDCode())
 	warehouseTpl, _ := template.New("model-warehouse-tpl").Parse(templates.GetWAREHOUSECode(flagModel.DatabaseType))
 	wgCount := len(t) * 2
+	fmt.Println(wgCount)
 	wg.Add(wgCount)
 	databaseName, username, password, urlPort := utils.ProcessCdn(flagModel.Url, flagModel.DatabaseType)
 	twTpl := &TmplWarehouse{
@@ -73,27 +74,29 @@ func RenderFile(t TmplStructList, flagModel model.FlagModel) int {
 		Now:      time.Now().Format("2006-01-02 15:04:05"),
 		DbType:   flagModel.DatabaseType,
 	}
-	FileHandler(*twTpl, flagModel.PackageName,
-		fmt.Sprintf("%s_warehouse", flagModel.DatabaseName), warehouseTpl, false)
+	FileHandler(*twTpl, &wg, flagModel.PackageName,
+		fmt.Sprintf("%s_warehouse", flagModel.DatabaseName), warehouseTpl, false, false)
 	for _, tmplStruct := range t {
-		go FileHandler(*tmplStruct, flagModel.PackageName, tmplStruct.TableName, tpl, true)
+		go FileHandler(*tmplStruct, &wg, flagModel.PackageName, tmplStruct.TableName, tpl, true, true)
 	}
 	for _, tmplStruct := range t {
-		go FileHandler(*tmplStruct, flagModel.PackageName,
-			fmt.Sprintf("%s%s", tmplStruct.TableName, "_crud"), curlTpl, false)
+		go FileHandler(*tmplStruct, &wg, flagModel.PackageName,
+			fmt.Sprintf("%s%s", tmplStruct.TableName, "_crud"), curlTpl, false, true)
 	}
 	wg.Wait()
 	return wgCount
 }
 
-func FileHandler(t interface{}, pathName, fileName string, tpl *template.Template, ow bool) {
+func FileHandler(t interface{}, wg *sync.WaitGroup, pathName, fileName string, tpl *template.Template, ow, isGo bool) {
 	path := fmt.Sprintf("./%v/%v.go", pathName, fileName)
 	exists, _ := utils.PathExists(path)
 	owe := true
 	if exists {
 		if !ow {
 			color.Red("[SERIOUS_WARN]This %v.go file already exists, skipped", fileName)
-			wg.Done()
+			if isGo {
+				wg.Done()
+			}
 			return
 		}
 		_ = os.Remove(path)
@@ -108,7 +111,9 @@ func FileHandler(t interface{}, pathName, fileName string, tpl *template.Templat
 		panic(err)
 	}
 	err = tpl.Execute(file, t)
-	wg.Done()
+	if isGo {
+		wg.Done()
+	}
 }
 
 // Combination 组合方法
@@ -136,6 +141,7 @@ func tableHandler(table *model.TableMetaData, flagModel model.FlagModel) *TmplSt
 	hasKey, keyName, keyType := getHasKey(table.Columns)
 	t.HasKey = hasKey
 	t.KeyColumn = keyName
+	t.KeyStructColumn = ColumnTableHandler(keyName)
 	t.KeyType = keyType
 	return t
 }

@@ -8,15 +8,19 @@ import (
 	"github.com/HC74/modelctl/model"
 	"github.com/HC74/modelctl/utils"
 	"github.com/fatih/color"
+	"os"
 	"strings"
 )
 
 var (
 	// 接受命令行输入的参数
-	flagModel = model.FlagModel{}
+	flagModel   = model.FlagModel{}
+	binInfoFlag *bool
+	Version     = "V0.4"
 )
 
 func init() {
+	binInfoFlag = flag.Bool("v", false, "show bin info")
 	flag.StringVar(&flagModel.DatabaseType, "t", "mysql", "数据库类型: 默认为mysql sqlserver:mssql")
 	flag.StringVar(&flagModel.Url, "url", "NULL", "数据库链接 默认为空 例如 mysql: 账号:密码@tcp(IP:端口)/库 或者您使用的是sqlserver : server=IP:端口;database=库;userId=账号;password=密码")
 	flag.StringVar(&flagModel.TableStr, "tables", "*", "表: 默认为全部,如果要选表生成 则需要 表1,表2,表3....")
@@ -27,6 +31,10 @@ func init() {
 func main() {
 	// 数据库类型
 	flag.Parse()
+	if *binInfoFlag {
+		color.Blue("MODELCTL -> (%v)", Version)
+		os.Exit(0)
+	}
 	// 给Tables赋值
 	flagModel.InitTables()
 	flagModel.InitDatabaseName()
