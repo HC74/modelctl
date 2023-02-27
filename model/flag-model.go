@@ -25,5 +25,5 @@ func (f *FlagModel) InitTables() {
 
 // InitDatabaseName 填充数据库名
 func (f *FlagModel) InitDatabaseName() {
-	f.DatabaseName, _ = utils.GetDbNameForUrl(f.Url)
+	f.DatabaseName, _, _, _ = utils.ProcessCdn(f.Url, f.DatabaseType)
 }

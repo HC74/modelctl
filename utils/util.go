@@ -75,13 +75,15 @@ func ProcessCdn(cdn, t string) (string, string, string, string) {
 
 func ProcessMssqlDBCdn(dns string) (string, string, string, string) {
 	var databaseName, username, password string
-	var m map[string]string
+	var m = make(map[string]string)
 	for _, item := range strings.Split(dns, ";") {
 		kv := strings.Split(item, "=")
-		m[kv[0]] = m[kv[1]]
+		key := kv[0]
+		val := kv[1]
+		m[key] = val
 	}
 	databaseName = m["database"]
-	username = m["user id"]
+	username = m["userId"]
 	password = m["password"]
 	return databaseName, username, password, m["server"]
 }
