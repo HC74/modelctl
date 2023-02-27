@@ -16,7 +16,7 @@ var (
 	// 接受命令行输入的参数
 	flagModel   = model.FlagModel{}
 	binInfoFlag *bool
-	Version     = "V0.4"
+	Version     = "V0.5"
 )
 
 func init() {
