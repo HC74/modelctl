@@ -95,32 +95,46 @@ func (data *{{$structName}}) UpdateById() error {
 }
 {{end}}
 
+
 // Paging{{$structName}} 分页
 // @param pageNum: 页数
 // @param pageSize: 每页大小
 // @param orders: 排序
 // @param maps: 条件
 // @param args: 值
+// @returns r1: 数据集 r2: 总页数 r3: 总数据量 r4: 异常
 // maps and args 例如 maps: id = ? and args: 1
-func Paging{{$structName}}(pageNum, pageSize int, orders string, maps interface{}, args ...interface{}) ([]*{{$structName}}, error) {
+func Paging{{$structName}}(pageNum, pageSize int, orders string, maps interface{}, args ...interface{}) ([]*{{$structName}}, int, int64, error) {
     var (
-        ms   []*{{$structName}}
-        err  error
-        size = pageSize
+        results    []*{{$structName}}
+        err   error
+        size  = pageSize
+        total int64
     )
+    if pageNum == 0 {
+        panic("页数不能为0")
+    }
+    pageNum--
     if strings.TrimSpace(orders) == "" {
         {{$dbName}} = {{$dbName}}.Order(orders)
     }
     if reflect.ValueOf(maps).IsValid() && maps != "" {
         {{$dbName}} = {{$dbName}}.Where(maps, args...)
     }
-    err = {{$dbName}}.Offset(pageNum).Limit(size).Find(&ms).Error
+    err = {{$dbName}}.Model({{$structName}}{}).Count(&total).Error
     if err != nil {
-        return nil, err
+        return nil, 0, 0, err
     }
-    return ms, nil
+    totalPageNum := total / int64(pageSize)
+    if total%int64(pageSize) != 0 {
+        totalPageNum++
+    }
+    err = {{$dbName}}.Offset(pageNum * size).Limit(size).Find(&results).Error
+    if err != nil {
+        return nil, 0, 0, err
+    }
+    return results, int(totalPageNum), total, nil
 }
-
 `
 	WAREHOUSE_TEMPLATE = `{{- $packageName := .Package}}{{ $dbName := .DbName}}{{ $user := .User}}{{ $password := .Password -}}
 {{- $host := .Host }}{{ $now := .Now }}{{ $dbType := .DbType -}}

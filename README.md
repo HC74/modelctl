@@ -4,5 +4,5 @@
 
 When used with Go modules, use the following import path:
 ```go
-go install github.com/HC74/modelctl@v0.7-ga
+go install github.com/HC74/modelctl@v0.8-ga
 ```
