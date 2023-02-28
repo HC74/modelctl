@@ -83,11 +83,7 @@ func (data *{{$structName}}) FindById() error {
 
 // UpdateById 根据ID查找 @param id:唯一标识
 func (data *{{$structName}}) UpdateById() error {
-    err := {{$dbName}}.Where("{{$keyColumn}} = ?", data.{{$keyStructColumn}}).First(&data).Error
-    if err != nil {
-        return err
-    }
-    err = {{$dbName}}.Save(&data).Error
+    err := {{$dbName}}.Save(&data).Error
     if err != nil {
         return err
     }
